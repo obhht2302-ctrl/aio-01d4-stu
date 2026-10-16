@@ -1,0 +1,86 @@
+{
+  "name": "가위바위보 게임",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rock-paper-scissors",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "81f0644e-8cc2-4c6d-8736-20a17cc71dc3",
+      "name": "게임 시작",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "f1d9f89e-1b4b-4d4f-9c3f-c60d668030dd"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = String($json.body?.playerChoice ?? '').trim().toLowerCase();\nconst aliases = {\n  rock: 'rock', paper: 'paper', scissors: 'scissors',\n  '바위': 'rock', '보': 'paper', '가위': 'scissors',\n};\nconst player = aliases[input];\n\nif (!player) {\n  return [{ json: {\n    ok: false,\n    error: 'playerChoice에 rock, paper, scissors 중 하나를 입력하세요.',\n    examples: ['rock', 'paper', 'scissors', '가위', '바위', '보'],\n  } }];\n}\n\nconst choices = ['rock', 'paper', 'scissors'];\nconst labels = { rock: '바위', paper: '보', scissors: '가위' };\nconst computer = choices[Math.floor(Math.random() * choices.length)];\nconst beats = { rock: 'scissors', scissors: 'paper', paper: 'rock' };\nconst result = player === computer ? 'draw' : beats[player] === computer ? 'win' : 'lose';\nconst resultLabels = { win: '승리', lose: '패배', draw: '무승부' };\n\nreturn [{ json: {\n  ok: true,\n  player: labels[player],\n  computer: labels[computer],\n  result,\n  resultLabel: resultLabels[result],\n  message: `내 선택: ${labels[player]} | 상대 선택: ${labels[computer]} | 결과: ${resultLabels[result]}`,\n} }];"
+      },
+      "id": "12ad845e-38e6-4e01-b8a7-66b812e9040c",
+      "name": "상대 선택 및 승패 판정",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.ok ? 200 : 400 }}"
+        }
+      },
+      "id": "f0076de6-7965-4658-82fb-925472670757",
+      "name": "게임 결과",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "게임 시작": {
+      "main": [
+        [
+          {
+            "node": "상대 선택 및 승패 판정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "상대 선택 및 승패 판정": {
+      "main": [
+        [
+          {
+            "node": "게임 결과",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1cb2d722-f3d8-45a2-8fe2-b40aed4555cd",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
