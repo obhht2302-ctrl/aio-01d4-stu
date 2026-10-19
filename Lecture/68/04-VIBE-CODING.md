@@ -16,7 +16,7 @@ flowchart LR
 | --- | --- | --- |
 | 16:00~16:02 | 0. 준비 (`~/vibe/tflow`, `git init`). **에이전트는 아직 켜지 않음** | |
 | 16:02~16:12 | 0. 요청서 → `SPEC.md` (직접) → VIBE-Q와 비교 · 고치기 · commit | 요구마다 확인 방법(숫자 · 파일), 숨은 요구, 비교한 줄 |
-| 16:12~16:23 | 1. 글자로 트리 · mermaid (R1 · R4). 첫 요청은 "SPEC.md를 읽고 확인 방법부터 말해" | `uv run tflow agents/it-agent.json`, `--mermaid` |
+| 16:12~16:23 | 1. 글자로 트리 · mermaid (R1 · R4). 첫 요청은 "SPEC.md를 읽고 확인 방법부터 말해" | `uv run tflow agents/it-agent.json`, `--md` → `.md` 미리보기 |
 | 16:23~16:35 | 2. TUI · 상세 · 경고 (R2 · R3 · R5 · R6) | `IT help agent`의 모델·Tool, 망가진 파일 |
 | 16:35~16:45 | 3. 한국어 설명 · 캐시 (R3) | 두 번째 선택은 바로 |
 | 16:45~16:50 | 4. 정리 · `SPEC.md` 체크 · 내 `assistant.json` 열어 보기 · 발표 메모 | |
@@ -32,6 +32,7 @@ flowchart LR
 | 한 번에 TUI까지 만들어 달라고 했나 | "1단계는 글자 출력만. 트리가 맞는지부터" |
 | 트리가 끝없이 길어지거나 같은 노드 반복 | "다시 모이는 노드(`Send result`)는 두 번째부터 한 줄로" |
 | mermaid가 안 그려짐 | "노드 이름에 `?`·괄호가 있어요. id는 번호로" |
+| TUI 안에서 그림을 그리려 함 | "터미널은 mermaid를 못 그립니다. `--md`로 `.md`를 만들어 VS Code 미리보기" |
 | If 갈래가 반대 | "`main` 바깥 목록 0번이 true" |
 | 설명에 Credential이 들어감 | "credentials는 빼고 보내라고 하세요" |
 | 실행해 보지 않고 다음 요청 | "에이전트가 됐다고 해도 직접 `uv run tflow`" |

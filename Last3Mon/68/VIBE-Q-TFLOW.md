@@ -34,7 +34,7 @@ $ tflow ~/aio-01d4-stu/Last3Mon/68/agents/it-agent.json
 | R1 | 워크플로우 JSON을 읽어, 웹훅(시작 노드)에서 `main` 연결을 따라가는 **트리**로 보여 준다. If·Switch의 갈래 이름(true/false, 출력 이름)을 붙인다 | ① 어디서 어디로, 갈림길은 어느 쪽이 어떤 경우 | `tflow agents/it-agent.json` |
 | R2 | AI 연결(`ai_languageModel`, `ai_tool`)은 따로 표시한다 (어느 Agent의 모델·Tool인지) | ② 모델과 Tool, 순서와는 다르게 붙음 | it-agent의 `IT help agent` 아래 |
 | R3 | 노드를 고르면 옆에 **종류 · 중요한 설정 · 하는 일(한국어)** 을 보여 준다. 하는 일은 LLM이 쓰고, 한 번 쓴 설명은 다시 쓰지 않는다 | ③ 설정과 한국어 설명, 매번 묻지 않기 | 노드를 고르기 |
-| R4 | `tflow <파일> --mermaid`로 mermaid 흐름도를 출력한다 (마크다운에 붙여 그대로 그려짐) | ④ 문서에 붙이면 그림 | 출력을 `.md`에 붙여 보기 |
+| R4 | `tflow <파일> --md`로 **마크다운 파일**(`<파일 이름>.md`)을 만든다. 안에 워크플로우 이름 · 노드 · 연결 수와 ` ```mermaid ` 흐름도 블록. TUI에서는 `m` 키로 같은 파일 저장 | ④ 문서에 붙이면 그림 | 만든 `.md`를 VS Code 미리보기(`Ctrl+Shift+V`)로 열어 그림 확인 |
 | R5 | 어디에도 연결되지 않은 노드, 없는 노드를 가리키는 연결을 **경고**로 보여 준다 | ⑤ 끊긴 연결을 열자마자 | 직접 망가뜨린 파일 |
 | R6 | 터미널 화면(TUI)으로 보여 준다 | "브라우저 말고 터미널" | `uv run tflow …`가 터미널에서 열림 |
 
@@ -90,7 +90,9 @@ git init
 
 ### 1. 글자로 트리와 mermaid (11분)
 
-**목표**: `uv run tflow <파일>`이 트리를 **글자로** 출력하고, `--mermaid`가 흐름도를 출력한다. 화면(TUI)은 아직 없다.
+**목표**: `uv run tflow <파일>`이 트리를 **글자로** 출력하고, `--md`가 mermaid 흐름도가 든 마크다운 파일을 만든다. 화면(TUI)은 아직 없다.
+
+> 터미널은 mermaid를 그림으로 그리지 못합니다. 그래서 그림은 **`.md` 파일로 내보내 마크다운 미리보기에서** 봅니다 (LLM · 인터넷 없이 됨). 웹 편집기로 보내지 않습니다 (워크플로우 내용이 밖으로 나감).
 
 <details><summary>▶ 1단계 · 읽기와 보여 주기를 나누기</summary>
 
@@ -107,7 +109,7 @@ git init
 노드 이름에는 빈칸, `?`, 한글, 괄호가 들어갑니다. mermaid 노드 id로 그대로 쓰면 그림이 깨집니다. id와 보이는 이름을 나누라고 요청합니다. 갈래 이름(true/false)은 화살표 글자로.
 </details>
 
-**확인**: 세 파일로 `uv run tflow`, `uv run tflow ... --mermaid` → 마크다운 미리보기에 붙여 그림이 나오는지, `uv run pytest -q`, `git commit`.
+**확인**: 세 파일로 `uv run tflow`, `uv run tflow ... --md` → 생긴 `.md`를 VS Code 미리보기로 열어 그림이 나오는지, `uv run pytest -q`, `git commit`.
 
 ### 2. TUI · 상세 · 경고 (12분)
 
@@ -160,7 +162,7 @@ export OPENAI_API_KEY=$(grep '^OPENAI_API_KEY=' ~/aio-01d4-stu/Last3Mon/.env | c
 | 요구 도출 | 내 SPEC에서 VIBE-Q와 달랐던 것 하나 (빠뜨린 것 또는 더 뽑은 것) |
 | 요청문 | 가장 잘 먹힌 요청문 한 개, 안 먹힌 요청문 한 개 |
 | 막힌 곳 | 다시 모이는 노드, mermaid 깨짐 등 어떻게 알아챘고 고쳤나 |
-| 시연 | 내 `assistant.json`의 트리와 mermaid, 노드 설명 하나 |
+| 시연 | 내 `assistant.json`의 트리와 `--md` 그림, 노드 설명 하나 |
 
 ## 확인
 
@@ -168,7 +170,7 @@ export OPENAI_API_KEY=$(grep '^OPENAI_API_KEY=' ~/aio-01d4-stu/Last3Mon/.env | c
 - [ ] R1 it-agent의 트리에 true/false 갈래가 보이고, 다시 모이는 노드가 끝없이 반복되지 않는다.
 - [ ] R2 `IT help agent` 아래(또는 상세)에 모델 1개, Tool 2개.
 - [ ] R3 노드를 고르면 종류·설정·한국어 설명, 두 번째는 캐시에서.
-- [ ] R4 `--mermaid` 출력이 그림으로 그려진다.
+- [ ] R4 `--md`로 만든 `.md`가 미리보기에서 그림으로 그려진다 (TUI의 `m`도 같은 파일).
 - [ ] R5 망가진 파일에서 경고.
 - [ ] R6 터미널에서 열리고 `q`로 닫힌다.
 - [ ] 수업 뒤 `git pull` → `VIBE-A-TFLOW.md`의 요구 도출 예시와 내 SPEC 비교.
