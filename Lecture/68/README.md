@@ -19,7 +19,7 @@
 | - | 13:00~14:00 | 점심 |  |
 | 5 | 14:00~14:50 | 3단계 · 검증과 장애 격리, Lab 03 예제 1·2 | [3단계](03-STAGE3-VERIFY-AND-SCALE.md), [Lab 03](../../Last3Mon/68/LAB-03-Q-VERIFY-AND-ISOLATE.md) |
 | 6 | 15:00~15:50 | 3단계 · Lab 03 과제 40분 (어려운 테스트 · 확장 계획) · 풀이 | [Lab 03](../../Last3Mon/68/LAB-03-Q-VERIFY-AND-ISOLATE.md) |
-| 7 | 16:00~16:50 | 바이브 코딩 · `tflow` 만들기 (각자) | [VIBE-Q-TFLOW](../../Last3Mon/68/VIBE-Q-TFLOW.md), [진행](04-VIBE-CODING.md) |
+| 7 | 16:00~16:50 | 바이브 코딩 · 요청서 → SPEC → `tflow` 만들기 (각자) | [VIBE-REQ-TFLOW](../../Last3Mon/68/VIBE-REQ-TFLOW.md) → [VIBE-Q-TFLOW](../../Last3Mon/68/VIBE-Q-TFLOW.md), [진행](04-VIBE-CODING.md) |
 | 8 | 17:00~17:50 | 바이브 코딩 발표 · 정리 · 강사 바이브 코딩 · 팁 · 69일차 예고 | [진행](04-VIBE-CODING.md) |
 
 ```mermaid

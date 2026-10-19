@@ -23,7 +23,7 @@ flowchart LR
 | - | 13:00~14:00 | 점심 | | |
 | 5 | 14:00~14:50 | 3단계 강의 · Lab 03 예제 1 · 2 | [3단계](../../Lecture/68/03-STAGE3-VERIFY-AND-SCALE.md), [Lab 03](LAB-03-Q-VERIFY-AND-ISOLATE.md) | `lab03` · `lab03-down` 통과 |
 | 6 | 15:00~15:50 | Lab 03 과제 40분 · 풀이 | Lab 03 | 내 케이스 5개 · 보고서 |
-| 7 | 16:00~16:50 | 바이브 코딩 `tflow` 각자 만들기 | [VIBE-Q-TFLOW](VIBE-Q-TFLOW.md) | R1~R5 · `pytest` |
+| 7 | 16:00~16:50 | 바이브 코딩 `tflow`: 요청서 → 내 SPEC → 비교 → 만들기 | [VIBE-REQ-TFLOW](VIBE-REQ-TFLOW.md) → [VIBE-Q-TFLOW](VIBE-Q-TFLOW.md) | `SPEC.md` · R1~R6 · `pytest` |
 | 8 | 17:00~17:50 | 발표 · 강사 정리 · 강사 바이브 코딩 · 팁 · 69일차 예고 | [진행](../../Lecture/68/04-VIBE-CODING.md) | |
 
 ## 1. 전날 준비 (약 15분)
@@ -134,21 +134,28 @@ flowchart LR
 
 ## 7. 7~8교시 · 바이브 코딩 `tflow`
 
-[VIBE-Q-TFLOW](VIBE-Q-TFLOW.md): n8n 워크플로우 JSON을 트리와 mermaid로 보여 주는 TUI. 67일차 `it-agent.json`과 오늘 `my-work/*.json`을 열어 봅니다.
+n8n 워크플로우 JSON을 트리와 mermaid로 보여 주는 TUI. 67일차 `it-agent.json`과 오늘 `my-work/*.json`을 열어 봅니다.
+
+**오늘부터 순서가 바뀝니다.** 문제(VIBE-Q)를 에이전트에게 통째로 주지 않고, 사람의 말인 **요청서에서 요구를 내가 먼저 뽑습니다.**
+
+```mermaid
+flowchart LR
+  REQ["VIBE-REQ-TFLOW<br/>요청서 읽기"] --> SPEC["~/vibe/tflow/SPEC.md<br/>직접 쓰기 10분"] --> Q["VIBE-Q-TFLOW<br/>비교 · 고치기"] --> B["SPEC을 에이전트에게<br/>단계별로"] --> A["수업 뒤 git pull<br/>VIBE-A-TFLOW"]
+```
 
 ```bash
 mkdir -p ~/vibe/tflow && cd ~/vibe/tflow
 git init
-codex        # 또는 claude, agy
+# SPEC.md를 다 쓰고 나서 codex (또는 claude, agy)
 ```
 
 | 시간 | 단계 | 확인 |
 | --- | --- | --- |
-| 16:00~16:03 | 0. 준비 | |
-| 16:03~16:15 | 1. 글자로 트리와 mermaid (R1 · R4) | 갈래가 보이고 끝없이 반복되지 않음, `--mermaid` |
-| 16:15~16:30 | 2. TUI · 상세 · 경고 (R2 · R5) | Agent 아래 모델 1 · Tool 2, 망가진 파일 경고 |
-| 16:30~16:43 | 3. 한국어 설명과 캐시 (R3) | 아래 `export` 후, 두 번째는 캐시에서 |
-| 16:43~16:50 | 4. 정리 | `uv run pytest -q`, `PROMPTS.md` |
+| 16:00~16:12 | 0. 준비 · [요청서](VIBE-REQ-TFLOW.md) → `SPEC.md` → [VIBE-Q](VIBE-Q-TFLOW.md)와 비교 | 요구마다 확인 방법, 비교한 줄 |
+| 16:12~16:23 | 1. 글자로 트리와 mermaid (R1 · R4) | 갈래가 보이고 끝없이 반복되지 않음, `--mermaid` |
+| 16:23~16:35 | 2. TUI · 상세 · 경고 (R2 · R5 · R6) | Agent 아래 모델 1 · Tool 2, 망가진 파일 경고 |
+| 16:35~16:45 | 3. 한국어 설명과 캐시 (R3) | 아래 `export` 후, 두 번째는 캐시에서 |
+| 16:45~16:50 | 4. 정리 | `SPEC.md` 체크, `uv run pytest -q`, `PROMPTS.md` |
 
 ```bash
 export OPENAI_API_KEY=$(grep '^OPENAI_API_KEY=' ~/aio-01d4-stu/Last3Mon/.env | cut -d= -f2-)
@@ -163,6 +170,7 @@ export OPENAI_API_KEY=$(grep '^OPENAI_API_KEY=' ~/aio-01d4-stu/Last3Mon/.env | c
 | `PROMPTS.md`, `DESIGN.md`, `TEST-REPORT.md` 정리 | 최종 프로젝트 재료 |
 | 회의록 Agent가 켜져 있는지 (`call meeting-agent requests/agent-meeting.json`) | 꺼 둔 채로 두지 않기 |
 | **`~/vibe/tflow` 지우지 않기** | 69일차에 오늘 만든 워크플로우를 여는 데 씀 |
+| `git pull` 후 `VIBE-A-TFLOW.md`(정답본)와 내 `SPEC.md` 비교 | 수업이 끝나면 올라옴. 요구 도출 예시 · 요청문 예 |
 | 69일차 준비: [00-DAY69-PREP](../../Lecture/69/00-DAY69-PREP.md) 1~2절 | 내일은 데이터 API를 쓰지 않음 (켜 두어도 됨) |
 
 ## 9. 막혔을 때 (오늘 공통)
