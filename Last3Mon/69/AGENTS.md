@@ -10,7 +10,7 @@
 4. 끝나면 한국어로 짧게 보고한다: 바꾼 노드, check 결과, 그리고 사람이 실행할 명령 두 줄.
    ```bash
    uv run tools/flow.py push my-work/<이름>.json
-   uv run tools/flow.py test cases/<요청에 나온 테스트 파일>.json
+   uv run tools/flow.py test cases/<요청에 나온 테스트 파일>.json -v
    ```
 5. **push와 test는 사람이 실행해 결과를 확인한다.** 사람이 "네가 push·test까지 해"라고 하면 직접 실행해도 된다 (push는 약 10초, n8n이 잠깐 재시작됨).
 6. 사람이 실패 보고서(`runs/*.json`)를 알려 주면 실패한 케이스의 요청·응답을 읽고 원인을 설명한 뒤 고친다. **같은 곳을 3번 고쳐도 실패하면 멈추고** 다른 방법을 제안한다.
@@ -165,7 +165,7 @@
 ```
 - 필드 이름은 점으로 내려간다: `issues.0.code` = `issues` 첫 항목의 `code`.
 - `equals`: 값이 같아야 함 · `contains`: 목록 중 **하나라도** 들어 있어야 함 (배열·객체는 JSON 글자로 바꿔 찾음) · `not_contains`: 하나도 없어야 함 · `status`: HTTP 코드(기본 200)
-- `uv run tools/flow.py test <파일> --repeat 3`: LLM 답은 매번 조금씩 다르므로 3번 이상 돌려 본다.
+- `uv run tools/flow.py test <파일> -v --repeat 3`: LLM 답은 매번 조금씩 다르므로 3번 이상 돌려 본다. `-v`(`--verbose`)는 케이스마다 보낸 요청 JSON과 받은 응답 JSON을 화면에 보여 준다 (보고서 `runs/*.json`에도 같은 것이 남음).
 - **테스트를 통과시키려고 테스트 파일의 기대 결과를 바꾸지 않는다.** 기대 결과가 틀렸다고 생각되면 사람에게 묻는다.
 
 ## 9. 하지 말 것

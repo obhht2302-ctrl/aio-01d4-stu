@@ -86,8 +86,8 @@ flowchart LR
 | 순서 | 할 일 | 파일 · 웹훅 | 확인 |
 | --- | --- | --- | --- |
 | 예제 1 (10분, 에이전트 없이) | `cp templates/ROLE-DESIGN-TEMPLATE.md my-work/DESIGN.md` 후 1절 역할 카드를 **직접** (특히 "하지 않는 일") | | 표 |
-| 예제 2 (15분) | 작성자: 공지 요청 → 공지 초안 (검토는 안 함) | `my-work/writer.json` · `my-writer` | `push my-work/writer.json` → `test cases/lab01.json --repeat 3`, `call my-writer requests/notice-phone.json` |
-| 과제 (15분) | 검토자: 날짜·시간 빠짐 · 개인 연락처 · 길이는 **코드로**, 사실에 없는 약속만 AI가 | `my-work/reviewer.json` · `my-reviewer` | `push my-work/reviewer.json` → `test cases/lab01-challenge.json --repeat 3` |
+| 예제 2 (15분) | 작성자: 공지 요청 → 공지 초안 (검토는 안 함) | `my-work/writer.json` · `my-writer` | `push my-work/writer.json` → `test cases/lab01.json -v --repeat 3`, `call my-writer requests/notice-phone.json` |
+| 과제 (15분) | 검토자: 날짜·시간 빠짐 · 개인 연락처 · 길이는 **코드로**, 사실에 없는 약속만 AI가 | `my-work/reviewer.json` · `my-reviewer` | `push my-work/reviewer.json` → `test cases/lab01-challenge.json -v --repeat 3` |
 
 (명령 앞에는 모두 `uv run tools/flow.py`가 붙습니다.)
 
@@ -100,8 +100,8 @@ flowchart LR
 | 순서 | 할 일 | 파일 · 웹훅 | 확인 |
 | --- | --- | --- | --- |
 | 예제 1 (10분) | 작성자 · 검토자의 계약 맞추기 (서로 부를 수 있게) | | `push my-work/writer.json my-work/reviewer.json`, `call my-writer requests/notice-phone.json`, `call my-reviewer requests/review-personal-info.json` |
-| 예제 2 (25분) | 공지 팀: 작성자 → 검토자, 통과 못 하면 의견을 주어 **한 번** 고쳐 쓰고 다시 검토 | `my-work/notice.json` · `my-notice` (오늘 끝까지 고쳐 나감) | `push my-work/notice.json` → `test cases/lab02.json`, `call my-notice requests/notice-phone.json` |
-| 과제 (35분, 4교시) | 통과한 공지로 메일 제목 한 줄 · 메신저용 짧은 글을 두 정리자가 나눠 만들고 모으기 (Fork-Join) | `my-work/notice.json` 고치기 | `test cases/lab02-challenge.json --repeat 3`, `test cases/lab02.json` |
+| 예제 2 (25분) | 공지 팀: 작성자 → 검토자, 통과 못 하면 의견을 주어 **한 번** 고쳐 쓰고 다시 검토 | `my-work/notice.json` · `my-notice` (오늘 끝까지 고쳐 나감) | `push my-work/notice.json` → `test cases/lab02.json -v`, `call my-notice requests/notice-phone.json` |
+| 과제 (35분, 4교시) | 통과한 공지로 메일 제목 한 줄 · 메신저용 짧은 글을 두 정리자가 나눠 만들고 모으기 (Fork-Join) | `my-work/notice.json` 고치기 | `test cases/lab02-challenge.json -v --repeat 3`, `test cases/lab02.json -v` |
 
 - 볼 것: 고쳐 쓴 공지에서 전화번호만 빠졌나요, 다른 것도 바뀌었나요? Executions에서 두 정리자 노드의 시작·끝 시각: **정말 동시에 돌았나요?** `DESIGN.md`에 적습니다.
 
@@ -111,9 +111,9 @@ flowchart LR
 
 | 순서 | 할 일 | 확인 |
 | --- | --- | --- |
-| 예제 1 (20분) | 결과만 보고 협업 과정을 알 수 있게 기록 (`rounds`, `steps`, `first_codes`). `steps`는 LLM이 아니라 워크플로우가 | `push my-work/notice.json` → `test cases/lab03.json` |
-| 예제 2 (20분) | 검토자가 꺼지면 **게시하지 않기** (fail-closed) | `off my-reviewer` → `test cases/lab03-down.json`, 고친 뒤 **다시 켜기** `push my-work/reviewer.json` → `test cases/lab02.json`, `test cases/lab03.json --repeat 3` |
-| 과제 (40분, 6교시) | 어려운 케이스 `cases/my-cases.json`, 같은 테스트로 AI 하나짜리(단일 Agent)와 숫자로 비교 | `test cases/my-cases.json --repeat 3`, `push reference/lab03-single-agent.json`, `test cases/my-cases.json --webhook my-single --repeat 3` |
+| 예제 1 (20분) | 결과만 보고 협업 과정을 알 수 있게 기록 (`rounds`, `steps`, `first_codes`). `steps`는 LLM이 아니라 워크플로우가 | `push my-work/notice.json` → `test cases/lab03.json -v` |
+| 예제 2 (20분) | 검토자가 꺼지면 **게시하지 않기** (fail-closed) | `off my-reviewer` → `test cases/lab03-down.json -v`, 고친 뒤 **다시 켜기** `push my-work/reviewer.json` → `test cases/lab02.json -v`, `test cases/lab03.json -v --repeat 3` |
+| 과제 (40분, 6교시) | 어려운 케이스 `cases/my-cases.json`, 같은 테스트로 AI 하나짜리(단일 Agent)와 숫자로 비교 | `test cases/my-cases.json -v --repeat 3`, `push reference/lab03-single-agent.json`, `test cases/my-cases.json -v --webhook my-single --repeat 3` |
 
 - 먼저 생각해 보기: 68일차에는 Agent가 꺼져도 나머지 답을 **계속** 냈습니다. 오늘은 왜 **멈춰야** 할까요?
 - 보고서: `cp templates/TEST-REPORT-TEMPLATE.md my-work/TEST-REPORT.md` 후 채우기.

@@ -153,7 +153,7 @@ HTTP 400
 ```bash
 uv run tools/flow.py push my-work/notice.json
 uv run tools/flow.py call my-notice requests/notice-phone.json   # ③과 같은 모양인가
-uv run tools/flow.py test cases/lab02.json                       # 수업 준비 때 4/4 (처음엔 검토자 거짓 경보로 3/4)
+uv run tools/flow.py test cases/lab02.json -v                       # 수업 준비 때 4/4 (처음엔 검토자 거짓 경보로 3/4)
 ```
 
 **관찰**: `notice-phone`에서 고쳐 쓴 공지를 처음 초안과 비교해 봅니다. 전화번호만 빠졌나요, 다른 것도 바뀌었나요? n8n **Executions**에서 `my-notice` 한 번에 `my-writer`, `my-reviewer` 실행이 몇 개씩 생겼나요?
@@ -246,8 +246,8 @@ HTTP 200 · 5.8s
 ```bash
 uv run tools/flow.py push my-work/notice.json
 uv run tools/flow.py call my-notice requests/notice-mail.json            # ③과 같은 모양인가
-uv run tools/flow.py test cases/lab02-challenge.json --repeat 3          # 수업 준비 때 4/4
-uv run tools/flow.py test cases/lab02.json                               # 4/4 그대로
+uv run tools/flow.py test cases/lab02-challenge.json -v --repeat 3          # 수업 준비 때 4/4
+uv run tools/flow.py test cases/lab02.json -v                               # 4/4 그대로
 ```
 
 <details><summary>▶ 1단계 · Fork-Join</summary>

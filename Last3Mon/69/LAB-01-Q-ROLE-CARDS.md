@@ -149,7 +149,7 @@ HTTP 400
 ```bash
 uv run tools/flow.py push my-work/writer.json
 uv run tools/flow.py call my-writer requests/notice-mail.json      # ③과 같은 모양인가
-uv run tools/flow.py test cases/lab01.json --repeat 3              # 수업 준비 때 5/5
+uv run tools/flow.py test cases/lab01.json -v --repeat 3              # 수업 준비 때 5/5
 uv run tools/flow.py call my-writer requests/notice-phone.json     # 관찰
 ```
 
@@ -276,7 +276,7 @@ HTTP 400
 ```bash
 uv run tools/flow.py push my-work/reviewer.json
 uv run tools/flow.py call my-reviewer requests/review-personal-info.json   # ③과 같은 모양인가
-uv run tools/flow.py test cases/lab01-challenge.json --repeat 3           # 수업 준비 때 6/6
+uv run tools/flow.py test cases/lab01-challenge.json -v --repeat 3           # 수업 준비 때 6/6
 ```
 
 <details><summary>▶ 1단계 · 규칙과 LLM을 어디서 나누나</summary>

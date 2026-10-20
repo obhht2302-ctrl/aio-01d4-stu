@@ -24,7 +24,7 @@ flowchart LR
 - 명령은 모두 `~/aio-01d4-stu/Last3Mon/69`에서 실행합니다.
 - `uv run tools/flow.py call <웹훅 경로> <요청>`은 `http://localhost:5678/webhook/<경로>`로 POST를 보내고, 첫 줄에 `HTTP 코드 · 걸린 시간`, 그 아래 응답 JSON을 보여 줍니다. `<요청>`은 `requests/` 파일이거나 `'{"facts": "..."}'` 같은 JSON 글자입니다.
 - 웹훅 경로 ([AGENTS.md](AGENTS.md) 3절): 공지 팀 `my-notice` (`my-work/notice.json`), 작성자 `my-writer`, 검토자 `my-reviewer`.
-- 아래 "지금 결과"와 "나와야 할 결과"는 수업 준비 때 Lab 02 예제 정답(`reference/lab02-example2-pipeline.json`)으로 실제로 돌린 값입니다. Lab 02 과제까지 했다면 응답에 `title` · `chat`도 붙어 있습니다. LLM 답 문장과 시간은 조금씩 다를 수 있습니다.
+- 아래 "지금 결과"와 "나와야 할 결과"는 수업 준비 때(10/18, 수업 전날 10/20) Lab 02 예제 정답(`reference/lab02-example2-pipeline.json`)으로 실제로 돌린 값입니다. Lab 02 과제까지 했다면 응답에 `title` · `chat`도 붙어 있습니다. LLM 답 문장과 시간은 조금씩 다를 수 있습니다.
 
 ---
 
@@ -71,30 +71,46 @@ HTTP 200 · 2.0s
 }
 ```
 
-공지는 맞습니다. 그런데 **누가 어떤 순서로 일했는지**가 없습니다. 프린터 공지는 수업 준비 때 두 번 돌려 두 번 모두 `담당자 확인`이었는데, 이유가 달랐습니다.
+공지는 맞습니다. 그런데 **누가 어떤 순서로 일했는지**가 없습니다. 프린터 공지도 봅니다.
 
 ```bash
 uv run tools/flow.py call my-notice requests/notice-phone.json
 ```
 
-| 실행 | 결과 (요약) | 고쳐 쓴 공지의 마지막 줄 | 두 번째 검토 |
+지금 `reference/`의 작성자 · 검토자로 돌리면 (수업 전날 2026-10-20 실행) 이렇게 나옵니다.
+
+```text
+HTTP 200 · 5.2s
+{
+  "route": "수정 후 게시 가능",
+  "published": true,
+  "rounds": 2,
+  "notice": "[프린터 드라이버 일괄 업데이트 안내]\n\n- 10월 30일(목) 18:00~19:00 사내 프린터 드라이버가 일괄 업데이트됩니다.\n- 업데이트 시간 동안 프린터 출력이 불가합니다.\n- 문의는 IT팀 김민지에게 연락 바랍니다.",
+  "codes": [],
+  "first_codes": ["personal_info"]
+}
+```
+
+결과는 맞지만, 고쳐 쓰기를 거쳤다는 것은 `rounds: 2`로 짐작할 뿐입니다. 그리고 같은 요청이 **언제나 이렇게 끝나지는 않습니다.** 수업 준비 때(10/18) 작성자 · 검토자를 다듬기 전 판으로 두 번 돌렸더니 두 번 모두 `담당자 확인`이었고, 이유가 달랐습니다.
+
+| 실행 (10/18) | 결과 (요약) | 고쳐 쓴 공지의 마지막 줄 | 두 번째 검토 |
 | --- | --- | --- | --- |
 | 1 | `"route": "담당자 확인"`, `"rounds": 2`, `"first_codes": ["personal_info"]`, `"codes": ["unsupported_claim"]` | `- 문의: IT팀 김민지` | 사실에 있는 이름을 "사실에 없는 연락처"로 잡음 |
 | 2 | 위와 같음 | `- 문의: IT팀 김민지 (내선 1234)` | 작성자가 **지어낸 내선 번호**를 잡음 |
 
-`first_codes`, `codes`가 있어도 결과만 보면 둘은 똑같습니다.
+`first_codes`, `codes`가 있어도 결과만 보면 둘은 똑같습니다. 내가 만든 작성자 · 검토자로도 이런 일이 생길 수 있습니다.
 
 ### ③ 원인 · 결과를 만드는 노드와 역할을 직접 보기
 
 - n8n에서 `my-notice` 워크플로우를 열어 결과를 만드는 Set 노드 셋(`Approved`, `Approved after revision`, `Needs person`)을 봅니다. **어느 길로 왔는지** 적는 칸이 없습니다.
-- 위 두 실행이 왜 달랐는지는 **역할을 하나씩** 불러 봐야 압니다. 고쳐 쓴 공지를 검토자에게 직접 보냅니다.
+- 10/18의 두 실행이 왜 달랐는지는 **역할을 하나씩** 불러 봐야 압니다. 고쳐 쓴 공지를 검토자에게 직접 보냅니다.
 
 ```bash
 uv run tools/flow.py call my-reviewer '{"facts": "10월 30일(목) 18:00~19:00 사내 프린터 드라이버 일괄 업데이트. 업데이트 중에는 출력이 안 됨. 문의는 IT팀 김민지(010-1234-5678, minji.kim@example.com).", "draft": "[프린터 드라이버 업데이트 안내]\n- 10월 30일(목) 18:00~19:00 사내 프린터 드라이버 일괄 업데이트 진행\n- 업데이트 시간 동안 프린터 출력 불가\n- 문의: IT팀 김민지"}'
 ```
 
 ```text
-라우터 없이 본 흐름
+역할별로 본 흐름 (10/18의 두 실행)
 공지 팀  Write draft → Review draft (personal_info) → Revise draft → Review again → Needs person
 실행 1   Revise draft는 번호를 잘 지움 → Review again이 맞는 문장을 의심 → 검토자를 고칠 일
 실행 2   Revise draft가 "(내선 1234)"를 새로 만듦 → Review again이 제대로 잡음 → 작성자를 고칠 일
@@ -148,8 +164,8 @@ HTTP 200 · 3.9s
 ```bash
 uv run tools/flow.py push my-work/notice.json
 uv run tools/flow.py call my-notice requests/notice-phone.json   # ④와 같은 모양인가
-uv run tools/flow.py test cases/lab03.json                       # 고치기 전 1/3 → 3/3
-uv run tools/flow.py test cases/lab02.json                       # 4/4 그대로
+uv run tools/flow.py test cases/lab03.json -v                       # 고치기 전 1/3 → 3/3
+uv run tools/flow.py test cases/lab02.json -v                       # 4/4 그대로
 ```
 
 <details><summary>▶ 1단계 · 왜 기록을 남기나</summary>
@@ -248,11 +264,11 @@ HTTP 200 · 2.5s
 ```bash
 uv run tools/flow.py push my-work/notice.json
 uv run tools/flow.py call my-notice requests/notice-mail.json    # ④와 같은 모양인가
-uv run tools/flow.py test cases/lab03-down.json                  # 고치기 전 0/2 → 2/2
+uv run tools/flow.py test cases/lab03-down.json -v                  # 고치기 전 0/2 → 2/2
 
 uv run tools/flow.py push my-work/reviewer.json                  # 검토자 다시 켜기
-uv run tools/flow.py test cases/lab02.json                       # 4/4
-uv run tools/flow.py test cases/lab03.json --repeat 3            # 예제 1이 그대로인지
+uv run tools/flow.py test cases/lab02.json -v                       # 4/4
+uv run tools/flow.py test cases/lab03.json -v --repeat 3            # 예제 1이 그대로인지
 ```
 
 <details><summary>▶ 1단계 · 멈추되 500은 아니게</summary>
@@ -329,9 +345,9 @@ uv run tools/flow.py call my-notice '{"request": "공지 써 주세요", "facts"
 ### 단일 Agent와 비교
 
 ```bash
-uv run tools/flow.py test cases/my-cases.json --repeat 3                       # 내 공지 팀
+uv run tools/flow.py test cases/my-cases.json -v --repeat 3                       # 내 공지 팀
 uv run tools/flow.py push reference/lab03-single-agent.json                     # AI 하나짜리 (웹훅 my-single)
-uv run tools/flow.py test cases/my-cases.json --webhook my-single --repeat 3    # 같은 테스트
+uv run tools/flow.py test cases/my-cases.json -v --webhook my-single --repeat 3    # 같은 테스트
 uv run tools/flow.py call my-single requests/notice-phone.json
 ```
 
@@ -379,7 +395,7 @@ uv run tools/flow.py call my-reviewer '{"facts": "<그 케이스의 facts>", "dr
 
 | 단계 | 요청 | 지금 | 원인 (직접 call로 확인) | 나와야 할 결과 |
 | --- | --- | --- | --- | --- |
-| 예제 1 | 메일 · 프린터 공지 | 200, `steps` 없음. 프린터는 `담당자 확인` (이유 둘) | 결과 노드에 기록 칸이 없음. 고쳐 쓴 공지를 검토자에게 직접 보내 역할을 구별 | 200, `steps` 2개 · 4개, 프린터는 `수정 후 게시 가능` |
+| 예제 1 | 메일 · 프린터 공지 | 200, `steps` 없음. 프린터는 `수정 후 게시 가능`, 예전 판에서는 `담당자 확인` (이유 둘) | 결과 노드에 기록 칸이 없음. 고쳐 쓴 공지를 검토자에게 직접 보내 역할을 구별 | 200, `steps` 2개 · 4개, 프린터는 `수정 후 게시 가능` |
 | 예제 2 | 검토자 꺼짐 | 500, 초안도 사라짐 | 검토자 404에 공지 팀이 멈춤 | 200, `published: false`, `reason`에 "검토자" |
 | 과제 예 A | 공백만 | 200 `게시 가능` (빈 공지가 나감) | 공백도 "비어 있지 않음" | 400 |
 | 과제 예 B | 사실 안에 지시문 | 200, 번호 없음 (통과) | 규칙 검사는 지시문을 읽지 않음 | 그대로 유지 |
