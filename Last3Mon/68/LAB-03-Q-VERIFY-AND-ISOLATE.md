@@ -66,10 +66,26 @@ uv run tools/flow.py test cases/lab03.json
 
 ## 예제 2 · Agent가 꺼졌을 때 (20분)
 
-회의록 Agent를 일부러 끕니다.
+**시나리오**: 회의록 Agent가 고장 나 응답하지 않는 날, 박서연 님이 복합 요청(`requests/composite.json`: T-1002 상태 · 회의록 할 일 · 프린터)을 보냈습니다. 새 시나리오를 만들지 않습니다.
+
+| 조건 | 값 |
+| --- | --- |
+| 고칠 파일 | 예제 1을 고친 `my-work/assistant.json` |
+| 문제 요청 | `requests/composite.json` (회의록 Agent를 `off`로 꺼 둔 상태) |
+| 바라는 결과 | HTTP 200. IT 업무 둘은 그대로 답하고, 회의록 업무만 `route: 담당자 연결`, 답에 "응답하지 않아" |
+| 테스트 | `cases/lab03-down.json` (이미 있음) · 다시 켠 뒤 `cases/lab02.json`, `cases/lab03.json` |
+
+**1) 회의록 Agent를 끄고 문제 요청을 직접 불러 봅니다.**
 
 ```bash
 uv run tools/flow.py off agents/meeting-agent.json
+uv run tools/flow.py call my-assistant requests/composite.json       # 라우터: 어떤 HTTP 코드? T-1002 상태가 있나?
+uv run tools/flow.py call meeting-agent requests/agent-meeting.json  # 꺼진 Agent는 무엇을 돌려주나?
+```
+
+**2) 테스트 전체로 확인합니다.**
+
+```bash
 uv run tools/flow.py test cases/lab03-down.json
 ```
 
@@ -88,7 +104,7 @@ Agent를 부르는 노드가 404·500을 받으면 n8n은 기본으로 워크플
 
 <details><summary>▶ 2단계 · 얼마나 기다릴까</summary>
 
-꺼진 Agent는 바로 404가 오지만, **느린** Agent는 응답이 안 올 수도 있습니다. 직원이 얼마나 기다려도 될지 정하고 요청문에 적습니다.
+꺼진 Agent는 바로 404가 오지만, **느린** Agent는 응답이 안 올 수도 있습니다. 직원이 얼마나 기다려도 될지 정하고 요청문에 적습니다. (느린 Agent는 오늘 테스트로 만들지 않습니다. 값을 정해 넣는 것까지만 합니다.)
 </details>
 
 <details><summary>▶ 3단계 · 다시 켜고 확인</summary>
@@ -108,7 +124,7 @@ uv run tools/flow.py test cases/lab03.json --repeat 3
 
 > "다음 주부터 전 직원이 씁니다. 지금 테스트는 우리가 고친 것만 확인하잖아요. 실제로 들어올 만한 어려운 요청으로 테스트를 더 만들고, 통과시키세요. 그리고 사람이 몰리면 어떻게 할지 숫자로 설명해 주세요."
 
-1. `cases/my-cases.json`에 어려운 케이스 **5개 이상**을 직접 씁니다 (형식은 [AGENTS.md](AGENTS.md) 8절, `body`로 직접 써도 됨).
+1. `cases/my-cases.json`에 어려운 케이스 **5개 이상**을 직접 씁니다. 맨 위에 `"webhook": "my-assistant"`, 형식은 [AGENTS.md](AGENTS.md) 8절, 요청은 `requests/` 파일 대신 `body`로 직접 써도 됩니다. 모양은 `cases/lab03.json`을 열어 따라 합니다.
 2. 지금 라우터로 돌려 실패를 보고, 에이전트에게 고치게 합니다 (테스트의 기대 결과는 바꾸지 않음).
 3. `my-work/DESIGN.md` 5·6절을 채웁니다. 6절의 시간은 **내 `runs/` 보고서의 값**으로 씁니다.
 
@@ -132,7 +148,7 @@ uv run tools/flow.py test cases/lab02.json
 
 <details><summary>▶ 3단계 · 확장 계획 생각하기</summary>
 
-보고서에서 IT 하나, 회의록 하나, 복합 요청의 시간을 찾습니다. 복합 요청 시간은 각 업무 시간의 합에 가까운가요, 가장 긴 것에 가까운가요? 21명이 동시에 보내면 n8n 하나가 몇 개를 동시에 처리해야 하나요? [3단계 교안](../../Lecture/68/03-STAGE3-VERIFY-AND-SCALE.md) 5절의 수직·수평 확장 표를 보고 내 측정값에 맞는 첫 조치를 고릅니다.
+보고서에서 IT 하나, 회의록 하나, 복합 요청의 시간을 찾습니다. 복합 요청 시간은 각 업무 시간의 합에 가까운가요, 가장 긴 것에 가까운가요? 두 가지를 같이 생각합니다: ① 단독 요청 시간에는 **나누기 LLM(약 1초)** 이 이미 들어 있다 ② 같은 Agent로 가는 업무들은 HTTP 노드 하나가 **동시에** 보내고, 다른 Agent 갈래는 **차례로** 실행된다. 21명이 동시에 보내면 n8n 하나가 몇 개를 동시에 처리해야 하나요? [3단계 교안](../../Lecture/68/03-STAGE3-VERIFY-AND-SCALE.md) 5절의 수직·수평 확장 표를 보고 내 측정값에 맞는 첫 조치를 고릅니다.
 </details>
 
 ## 막혔을 때
