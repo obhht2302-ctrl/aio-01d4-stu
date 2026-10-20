@@ -14,10 +14,28 @@ flowchart LR
 
 ## 예제 1 · 빠진 입력 (20분)
 
-먼저 그대로 돌려 봅니다.
+**시나리오**: 김민지 님이 회의록을 붙이지 않고 "이번 회의록 할 일 정리 부탁해요"만 보냈습니다 (`requests/meeting-no-notes.json`). 새 시나리오를 만들지 않습니다. 이 요청 하나로 시작합니다.
+
+| 조건 | 값 |
+| --- | --- |
+| 고칠 파일 | `my-work/assistant.json` (Lab 02 예제 2의 라우터, 새 파일을 만들지 않음) |
+| 문제 요청 | `requests/meeting-no-notes.json` → `{"message": "이번 회의록 할 일 정리 부탁해요", "user": "김민지"}` (`notes` 없음) |
+| 바라는 결과 | HTTP 200, 그 업무의 `route: 입력 필요`, `reply`에 회의록을 보내 달라는 말. **회의록 Agent는 부르지 않음** |
+| 테스트 | `cases/lab03.json` (이미 있음, 고치지 않음) · `cases/lab02.json`도 그대로 통과 |
+
+**1) 문제 요청을 직접 불러 봅니다** (라우터 → 회의록 Agent 순서로).
 
 ```bash
 uv run tools/flow.py push my-work/assistant.json
+uv run tools/flow.py call my-assistant requests/meeting-no-notes.json     # 라우터: 어떤 HTTP 코드?
+uv run tools/flow.py call meeting-agent requests/meeting-no-notes.json    # 회의록 Agent 직접: 계약대로 무엇을 돌려주나?
+```
+
+라우터 응답이 200이 아니라면, 회의록 Agent가 돌려준 것이 라우터를 어떻게 만들었는지 두 결과를 나란히 놓고 봅니다.
+
+**2) 테스트 전체로 확인합니다.** 이 케이스만 실패하고 나머지는 통과하는지 봅니다.
+
+```bash
 uv run tools/flow.py test cases/lab03.json
 ```
 
@@ -30,7 +48,7 @@ uv run tools/flow.py test cases/lab03.json
 
 <details><summary>▶ 1단계 · 보고서 읽기</summary>
 
-실패한 케이스의 `status`와 `response`를 `runs/lab03-....json`에서 봅니다. 응답이 500이면 라우터 **전체**가 멈춘 것입니다. n8n **Executions**에서 어느 노드가 빨간지, 그 노드가 받은 응답이 무엇인지 확인합니다. 회의록 Agent의 계약(예제 1의 표)에서 `notes`가 없을 때 무엇을 돌려준다고 했나요?
+실패한 케이스의 `status`와 `response`를 `runs/lab03-....json`에서 봅니다. 응답이 500이면 라우터 **전체**가 멈춘 것입니다. n8n **Executions**에서 어느 노드가 빨간지, 그 노드가 받은 응답이 무엇인지 확인합니다. 회의록 Agent의 계약(Lab 02 예제 1에서 쓴 `my-work/DESIGN.md` 2절, [AGENTS.md](AGENTS.md) 3절)에서 `notes`가 없을 때 무엇을 돌려준다고 했나요? 1)의 두 번째 `call` 결과와 같은가요?
 </details>
 
 <details><summary>▶ 2단계 · 어디서 막을까</summary>
