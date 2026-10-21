@@ -1642,4 +1642,4 @@ uv run tools/flow.py test cases/lab03.json -v                 # 3/3
 ```
 
 - 정리자 정답 · 어려운 케이스 · 최종본(위 표의 06 · 10 · 12)은 이 폴더(`Last3Mon/69/answers/`)에 있습니다 (강사 저장소 `Day/69/answers/`와 같은 파일). 명령은 `Last3Mon/69`에서 `answers/…`로 씁니다.
-- 다 끝나면 검토자가 켜져 있는지 확인: `uv run tools/flow.py call my-reviewer requests/review-good.json` → `"passed": true`.
+- 다 끝나면 검토자가 켜져 있는지 확인: `uv run tools/flow.py call my-reviewer requests/review-good.json -v` → `"passed": true`.
