@@ -1,0 +1,220 @@
+{
+  "name": "매일 Gmail 메일 요약 → Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "8f3208c1-7fd5-4cc7-9cb0-cf5a416b9524",
+      "name": "매일 오전 9시",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fba52b67-3405-4dde-8043-df2c9dc952d1",
+              "name": "gmailQuery",
+              "value": "label:inbox is:unread newer_than:1d",
+              "type": "string"
+            },
+            {
+              "id": "1f6a7021-bd14-4914-aec8-25c0c4c48659",
+              "name": "model",
+              "value": "gpt-4.1-mini",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff936c36-7a55-4640-831c-5a2b71876cf2",
+      "name": "검색 조건 설정",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "q": "={{ $json.gmailQuery }}"
+        },
+        "options": {}
+      },
+      "id": "7a7b57e7-e55a-4672-a687-ec012d7f9fef",
+      "name": "Gmail 메일 검색",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "options": {}
+      },
+      "id": "dfb2f6d3-84a0-4fea-85fd-a26e1a7151c3",
+      "name": "Gmail 본문 가져오기",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const emails = $input.all().map(({ json }) => {\n  const headers = json.payload?.headers ?? [];\n  const header = (name) => headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? '';\n  const decode = (value = '') => Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');\n  const findText = (part) => {\n    if (!part) return '';\n    if (part.mimeType === 'text/plain' && part.body?.data) return decode(part.body.data);\n    return (part.parts ?? []).map(findText).find(Boolean) ?? '';\n  };\n  return {\n    from: header('From'),\n    subject: header('Subject') || '(제목 없음)',\n    date: header('Date'),\n    body: findText(json.payload).slice(0, 12000),\n  };\n});\n\nreturn [{ json: { emails, sourceText: emails.map((email, index) => `메일 ${index + 1}\\n보낸 사람: ${email.from}\\n제목: ${email.subject}\\n날짜: ${email.date}\\n본문:\\n${email.body}`).join('\\n\\n---\\n\\n') } }];"
+      },
+      "id": "3f6f5e68-4cd2-4bc0-8073-46596f9b6721",
+      "name": "메일 묶기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $('검색 조건 설정').first().json.model, temperature: 0.2, messages: [ { role: 'system', content: '당신은 업무 메일 요약 도우미입니다. 입력된 메일 전체를 한국어로 요약하세요. Slack에 게시할 Markdown 형식으로 작성합니다. 맨 위에 메일 수를 표시하고, 메일별로 보낸 사람·제목·핵심 요지·필요한 조치(없으면 없음)를 짧게 적으세요. 추측하지 말고, 민감한 개인정보는 반복하지 마세요.' }, { role: 'user', content: $('메일 묶기').first().json.sourceText } ] }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "59079043-b6b5-49fb-b3b0-11d7037d6959",
+      "name": "OpenAI로 요약",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "#daily-mail-summary",
+        "text": "={{ '☀️ *오늘의 Gmail 요약* (' + $now.setZone('Asia/Seoul').toFormat('yyyy-MM-dd') + ')\\n\\n' + $json.choices[0].message.content }}",
+        "otherOptions": {}
+      },
+      "id": "cc622cee-49c8-4910-a4b4-0dfdb9e376a1",
+      "name": "Slack으로 보내기",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "매일 오전 9시": {
+      "main": [
+        [
+          {
+            "node": "검색 조건 설정",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "검색 조건 설정": {
+      "main": [
+        [
+          {
+            "node": "Gmail 메일 검색",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 메일 검색": {
+      "main": [
+        [
+          {
+            "node": "Gmail 본문 가져오기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 본문 가져오기": {
+      "main": [
+        [
+          {
+            "node": "메일 묶기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "메일 묶기": {
+      "main": [
+        [
+          {
+            "node": "OpenAI로 요약",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI로 요약": {
+      "main": [
+        [
+          {
+            "node": "Slack으로 보내기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul"
+  },
+  "versionId": "0a735066-4d3d-4b32-a588-c911faf1cee0",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
