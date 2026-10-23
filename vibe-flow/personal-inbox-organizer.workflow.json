@@ -1,0 +1,221 @@
+{
+  "name": "Vibe Flow - Personal Inbox Organizer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "personal-inbox",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1c4c49f4-6282-47dc-84cb-123fb285e1ca",
+      "name": "Personal Inbox Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-980, 100],
+      "webhookId": "f8b46b25-6937-4c23-9913-33d93e565c79"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.body ?? $json;\nlet body = raw;\nif (typeof raw === 'string') {\n  try { body = JSON.parse(raw); } catch { body = {}; }\n}\nconst action = String(body.action ?? 'preview').toLowerCase();\nconst timezone = String(body.timezone ?? 'Asia/Seoul');\nconst allowedActions = ['preview', 'confirm', 'cancel'];\nlet error = null;\ntry { new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(); } catch { error = 'timezone은 올바른 IANA 시간대여야 합니다.'; }\nif (!allowedActions.includes(action)) error = 'action은 preview, confirm, cancel 중 하나여야 합니다.';\nif (action === 'preview' && (!body.message || !String(body.message).trim())) error = 'message는 필수입니다.';\nif (action === 'confirm' && (!body.request_id || !Array.isArray(body.items))) error = 'confirm에는 request_id와 items 배열이 필요합니다.';\nreturn [{ json: error ? { status: 'invalid_request', error, http_status: 400 } : { action, message: String(body.message ?? '').trim(), user: String(body.user ?? 'anonymous'), timezone, request_id: body.request_id ?? null, items: Array.isArray(body.items) ? body.items : [] } }];"
+      },
+      "id": "bd0508e3-b63d-454e-b5f5-1b16cfe12fc0",
+      "name": "Normalize & Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-760, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "4df76d03-5e14-4f7f-8695-e4ea32f47838",
+              "leftValue": "={{ $json.http_status }}",
+              "rightValue": 400,
+              "operator": { "type": "number", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "94fd8a44-43ce-4d60-8a76-a9a7e36c2dd6",
+      "name": "Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-540, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: $json.status, error: $json.error } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "b15d7938-8f13-43ac-a88a-94f700766e3c",
+      "name": "Return 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-300, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "3f1ae0aa-2497-4785-85de-ea773f333b71",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "cancel",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fe0c2599-fca0-4c30-ae9c-7f17c9d875da",
+      "name": "Cancel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-300, 20]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'cancelled', request_id: $json.request_id, saved_count: 0 } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "8facbf05-e4e3-41e7-a6d1-bc6678019c49",
+      "name": "Return Cancelled",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [-60, -100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "fa4632d6-16af-4390-b776-180a474d9c91",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "confirm",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c43f9962-dd89-41c4-a266-f8bde458b443",
+      "name": "Confirmed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-60, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst pad = n => String(n).padStart(2, '0');\nconst localNow = new Date(new Date().toLocaleString('en-US', { timeZone: input.timezone }));\nconst dateOnly = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;\nconst dateFor = text => {\n  const d = new Date(localNow);\n  if (/모레/.test(text)) d.setDate(d.getDate() + 2);\n  else if (/내일/.test(text)) d.setDate(d.getDate() + 1);\n  else if (/오늘/.test(text)) {}\n  else {\n    const names = ['일', '월', '화', '수', '목', '금', '토'];\n    const m = text.match(/([월화수목금토일])요일/);\n    if (m) { const target = names.indexOf(m[1]); let diff = (target - d.getDay() + 7) % 7; if (diff === 0) diff = 7; d.setDate(d.getDate() + diff); }\n    else return null;\n  }\n  return dateOnly(d);\n};\nconst offsetFor = (date, timeZone) => {\n  try {\n    const parts = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' }).formatToParts(date);\n    const value = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+00:00';\n    return value.replace('GMT', '') || '+00:00';\n  } catch { return '+00:00'; }\n};\nconst clauses = input.message.split(/(?:[.!?]+\\s*|\\n+|,\\s*)/).map(v => v.trim()).filter(Boolean);\nconst items = [];\nfor (const clause of clauses) {\n  const clean = clause.replace(/^(그리고|또|또한)\\s*/, '').trim();\n  if (!clean) continue;\n  if (/메모|기록해|기억해/.test(clean)) {\n    const title = clean.replace(/(도)?\\s*(메모|기록|기억)(해|해줘|해 줘|해 주세요|해주세요)?[\\s.]*$/g, '').trim() || clean;\n    items.push({ type: 'note', route: 'notes', title, content: null, needs_input: true, source_text: clause });\n    continue;\n  }\n  const amountMatch = clean.match(/([0-9][0-9,]*)\\s*원/);\n  if (amountMatch && /(썼|결제|구매|지출|냈)/.test(clean)) {\n    const description = clean.replace(/오늘|어제|내일/g, '').replace(/([0-9][0-9,]*)\\s*원/g, '').replace(/(으로|로)?\\s*(썼어|썼다|결제했어|결제했다|구매했어|구매했다|지출했어|지출했다|냈어|냈다)/g, '').trim();\n    items.push({ type: 'expense', route: 'expenses', category: /교재|책|강의|교육/.test(clean) ? '교육' : '미분류', amount: Number(amountMatch[1].replace(/,/g, '')), currency: 'KRW', description: description || '지출', needs_input: false, source_text: clause });\n    continue;\n  }\n  if (/(예약|약속|회의|미팅|진료)/.test(clean)) {\n    const date = dateFor(clean);\n    const tm = clean.match(/(?:(오전|오후)\\s*)?(\\d{1,2})시(?:\\s*(\\d{1,2})분)?/);\n    let startsAt = null;\n    if (date && tm) { let hour = Number(tm[2]); if (tm[1] === '오후' && hour < 12) hour += 12; if (tm[1] === '오전' && hour === 12) hour = 0; const offset = offsetFor(new Date(), input.timezone); startsAt = `${date}T${pad(hour)}:${pad(Number(tm[3] || 0))}:00${offset}`; }\n    const title = clean.replace(/오늘|내일|모레|[월화수목금토일]요일/g, '').replace(/(?:(오전|오후)\\s*)?\\d{1,2}시(?:\\s*\\d{1,2}분)?(?:에)?/g, '').trim();\n    items.push({ type: 'calendar', route: 'calendar', title: title || clean, starts_at: startsAt, timezone: input.timezone, needs_input: !startsAt, source_text: clause });\n    continue;\n  }\n  if (/(까지|할 ?일|해야|만들|작성|제출|보내|준비)/.test(clean)) {\n    const dueDate = dateFor(clean);\n    const title = clean.replace(/오늘|내일|모레|[월화수목금토일]요일/g, '').replace(/까지/g, '').replace(/(해야 해|해야해|해 줘|해주세요)[\\s.]*$/g, '').trim();\n    items.push({ type: 'task', route: 'tasks', title: title || clean, due_date: dueDate, needs_input: !dueDate, source_text: clause });\n    continue;\n  }\n  items.push({ type: 'unknown', route: 'questions', title: clean, question: '일정, 할 일, 지출, 메모 중 어떤 종류인지 알려 주세요.', needs_input: true, source_text: clause });\n}\nconst requestId = `inbox_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;\nconst counts = items.reduce((acc, item) => { acc[item.route] = (acc[item.route] || 0) + 1; return acc; }, {});\nreturn [{ json: { status: 'confirmation_required', request_id: requestId, user: input.user, timezone: input.timezone, items, route_counts: counts, confirmation: { webhook: '/webhook/personal-inbox', method: 'POST', body: { action: 'confirm', request_id: requestId, items } } } }];"
+      },
+      "id": "947c78a5-9d92-45bb-82b8-55b1b5a513e5",
+      "name": "Extract, Validate & Route Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [180, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "b676eff5-dc56-4645-8c8c-f64847cc3b1a",
+      "name": "Return Draft",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [420, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst allowed = new Set(['calendar', 'task', 'expense', 'note']);\nconst errors = [];\ninput.items.forEach((item, index) => {\n  if (!item || typeof item !== 'object') { errors.push(`items[${index}]는 객체여야 합니다.`); return; }\n  if (!allowed.has(item.type)) errors.push(`items[${index}].type이 올바르지 않습니다.`);\n  if (item.needs_input === true) errors.push(`items[${index}]는 추가 정보가 필요합니다.`);\n  if (item.type === 'calendar' && (!item.title || !item.starts_at || Number.isNaN(Date.parse(item.starts_at)))) errors.push(`items[${index}] 일정의 title 또는 starts_at이 올바르지 않습니다.`);\n  if (item.type === 'task' && !item.title) errors.push(`items[${index}] 할 일의 title이 필요합니다.`);\n  if (item.type === 'expense' && (!Number.isFinite(Number(item.amount)) || Number(item.amount) <= 0 || !item.description)) errors.push(`items[${index}] 지출의 amount 또는 description이 올바르지 않습니다.`);\n  if (item.type === 'note' && (!item.title || !item.content)) errors.push(`items[${index}] 메모의 title과 content가 필요합니다.`);\n});\nreturn [{ json: errors.length ? { status: 'confirmation_rejected', request_id: input.request_id, error: '확정할 수 없는 항목이 있습니다.', details: errors, http_status: 400 } : { ...input, confirmation_valid: true } }];"
+      },
+      "id": "47b7d9c0-ed89-450e-b4f2-934448f079d5",
+      "name": "Validate Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [180, 20]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "d3ccb3b4-07e7-479b-8089-c6c139290c88",
+              "leftValue": "={{ $json.confirmation_valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c556cf84-065e-48fa-8f62-bf0bf5714493",
+      "name": "Confirmation Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [420, 20]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: $json.status, request_id: $json.request_id, error: $json.error, details: $json.details } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "472dd4ca-ab18-4118-a879-fcc398f43813",
+      "name": "Return Confirmation Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 140]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst targets = { calendar: 'fake_calendar', task: 'fake_task_list', expense: 'fake_expense_ledger', note: 'fake_notes' };\nconst savedAt = new Date().toISOString();\nconst results = input.items.map((item, index) => ({ index, type: item.type, target: targets[item.type], status: 'saved', fake_id: `${item.type}_${Date.now()}_${index + 1}`, saved_at: savedAt }));\nreturn [{ json: { status: 'completed', request_id: input.request_id, saved_count: results.length, failed_count: 0, results } }];"
+      },
+      "id": "2d0f6613-4b65-4bd8-ac1a-463c53d3d65c",
+      "name": "Fake Save by Route",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -20]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "de328b29-ce88-4973-96db-b5d55f5ac622",
+      "name": "Return Save Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [900, -20]
+    }
+  ],
+  "connections": {
+    "Personal Inbox Webhook": { "main": [[{ "node": "Normalize & Validate Input", "type": "main", "index": 0 }]] },
+    "Normalize & Validate Input": { "main": [[{ "node": "Input Valid?", "type": "main", "index": 0 }]] },
+    "Input Valid?": { "main": [[{ "node": "Cancel?", "type": "main", "index": 0 }], [{ "node": "Return 400", "type": "main", "index": 0 }]] },
+    "Cancel?": { "main": [[{ "node": "Return Cancelled", "type": "main", "index": 0 }], [{ "node": "Confirmed?", "type": "main", "index": 0 }]] },
+    "Confirmed?": { "main": [[{ "node": "Validate Confirmation", "type": "main", "index": 0 }], [{ "node": "Extract, Validate & Route Draft", "type": "main", "index": 0 }]] },
+    "Extract, Validate & Route Draft": { "main": [[{ "node": "Return Draft", "type": "main", "index": 0 }]] },
+    "Validate Confirmation": { "main": [[{ "node": "Confirmation Valid?", "type": "main", "index": 0 }]] },
+    "Confirmation Valid?": { "main": [[{ "node": "Fake Save by Route", "type": "main", "index": 0 }], [{ "node": "Return Confirmation Error", "type": "main", "index": 0 }]] },
+    "Fake Save by Route": { "main": [[{ "node": "Return Save Result", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
